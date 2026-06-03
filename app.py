@@ -1,11 +1,15 @@
 from flask import Flask, request
 import requests
 import os
+import threading
+import time
 
 app = Flask(__name__)
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 CHAT_ID = os.environ.get("CHAT_ID")
+
+DELETE_AFTER_SECONDS = 10  #sec
 
 @app.route("/")
 def home():
@@ -26,10 +30,37 @@ def webhook():
             "text": message
         }
 
-        response = requests.post(
-            telegram_url,
-            json=payload,
+response = requests.post(
+    telegram_url,
+    json=payload,
+    timeout=10
+)
+
+result = response.json()
+
+if result.get("ok"):
+
+    message_id = result["result"]["message_id"]
+
+    def delete_later():
+
+        time.sleep(DELETE_AFTER_SECONDS)
+
+        delete_url = f"https://api.telegram.org/bot{BOT_TOKEN}/deleteMessage"
+
+        requests.post(
+            delete_url,
+            json={
+                "chat_id": CHAT_ID,
+                "message_id": message_id
+            },
             timeout=10
+        )
+
+    threading.Thread(
+        target=delete_later,
+        daemon=True
+    ).start()
         )
 
         return {
