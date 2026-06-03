@@ -4,7 +4,7 @@ import os
 import threading
 import time
 
-app = Flask(*name*)
+app = Flask(_name_)
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 CHAT_ID = os.environ.get("CHAT_ID")
