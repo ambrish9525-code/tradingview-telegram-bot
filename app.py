@@ -4,76 +4,78 @@ import os
 import threading
 import time
 
-app = Flask(__name__)
+app = Flask(*name*)
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 CHAT_ID = os.environ.get("CHAT_ID")
 
-DELETE_AFTER_SECONDS = 10  #sec
+DELETE_AFTER_SECONDS = 10  # Test with 10 seconds
 
 @app.route("/")
 def home():
-    return "Bot Running"
+return "Bot Running"
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
 
-    try:
-        data = request.json
 
-        message = data.get("message", str(data))
+try:
+    data = request.json
 
-        telegram_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    message = data.get("message", str(data))
 
-        payload = {
-            "chat_id": CHAT_ID,
-            "text": message
-        }
+    telegram_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
-response = requests.post(
-    telegram_url,
-    json=payload,
-    timeout=10
-)
+    payload = {
+        "chat_id": CHAT_ID,
+        "text": message
+    }
 
-result = response.json()
+    response = requests.post(
+        telegram_url,
+        json=payload,
+        timeout=10
+    )
 
-if result.get("ok"):
+    result = response.json()
 
-    message_id = result["result"]["message_id"]
+    # Delete ONLY TEST messages
+    if result.get("ok") and message.startswith("TEST"):
 
-    def delete_later():
+        message_id = result["result"]["message_id"]
 
-        time.sleep(DELETE_AFTER_SECONDS)
+        def delete_later():
 
-        delete_url = f"https://api.telegram.org/bot{BOT_TOKEN}/deleteMessage"
+            time.sleep(DELETE_AFTER_SECONDS)
 
-        requests.post(
-            delete_url,
-            json={
-                "chat_id": CHAT_ID,
-                "message_id": message_id
-            },
-            timeout=10
-        )
+            delete_url = f"https://api.telegram.org/bot{BOT_TOKEN}/deleteMessage"
 
-    threading.Thread(
-        target=delete_later,
-        daemon=True
-    ).start()
-        )
+            requests.post(
+                delete_url,
+                json={
+                    "chat_id": CHAT_ID,
+                    "message_id": message_id
+                },
+                timeout=10
+            )
 
-        return {
-            "status": "success",
-            "telegram_response": response.text
-        }, 200
+        threading.Thread(
+            target=delete_later,
+            daemon=True
+        ).start()
 
-    except Exception as e:
+    return {
+        "status": "success",
+        "telegram_response": response.text
+    }, 200
 
-        return {
-            "status": "error",
-            "message": str(e)
-        }, 500
+except Exception as e:
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    return {
+        "status": "error",
+        "message": str(e)
+    }, 500
+
+
+if *name* == "*main*":
+app.run(host="0.0.0.0", port=10000)
