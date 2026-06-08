@@ -4,7 +4,7 @@ import os
 import threading
 import time
 
-app = Flask(*name*)
+app = Flask(__name__)
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 CHAT_ID = os.environ.get("CHAT_ID")
@@ -13,7 +13,7 @@ DELETE_AFTER_SECONDS = 10
 
 @app.route("/")
 def home():
-return "Bot Running"
+    return "Bot Running"
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -69,5 +69,5 @@ except Exception as e:
     }, 500
 
 
-if *name* == "*main*":
+if __name__ == "__main__":
 app.run(host="0.0.0.0", port=10000)
