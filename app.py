@@ -4,12 +4,12 @@ import os
 import threading
 import time
 
-app = Flask(_name_)
+app = Flask(*name*)
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 CHAT_ID = os.environ.get("CHAT_ID")
 
-DELETE_AFTER_SECONDS = 10  # Test with 10 seconds
+DELETE_AFTER_SECONDS = 10
 
 @app.route("/")
 def home():
@@ -17,41 +17,34 @@ return "Bot Running"
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
-
-
 try:
-    data = request.json
+data = request.get_json(force=True)
 
-    message = data.get("message", str(data))
+
+    message = data.get("message", "No message")
 
     telegram_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
-    payload = {
-        "chat_id": CHAT_ID,
-        "text": message
-    }
-
     response = requests.post(
         telegram_url,
-        json=payload,
+        json={
+            "chat_id": CHAT_ID,
+            "text": message
+        },
         timeout=10
     )
 
     result = response.json()
 
-    # Delete ONLY TEST messages
     if result.get("ok") and message.startswith("TEST"):
 
         message_id = result["result"]["message_id"]
 
         def delete_later():
-
             time.sleep(DELETE_AFTER_SECONDS)
 
-            delete_url = f"https://api.telegram.org/bot{BOT_TOKEN}/deleteMessage"
-
             requests.post(
-                delete_url,
+                f"https://api.telegram.org/bot{BOT_TOKEN}/deleteMessage",
                 json={
                     "chat_id": CHAT_ID,
                     "message_id": message_id
@@ -65,8 +58,7 @@ try:
         ).start()
 
     return {
-        "status": "success",
-        "telegram_response": response.text
+        "status": "success"
     }, 200
 
 except Exception as e:
